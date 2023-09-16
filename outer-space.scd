@@ -8,6 +8,52 @@ f = FreqScope(server: s);
 
 ~scale = Scale.minor;
 
+MIDIClient.init();
+MIDIIn.connectAll();
+
+MIDIFunc.trace(true);
+MIDIFunc.trace(false);
+
+(
+    ~noteOnMidiFunc = MIDIFunc.noteOn({
+        arg ...args;
+
+        postln("noteOn: " + args);
+    });
+
+    ~noteOffMidiFunc = MIDIFunc.noteOff({
+        arg ...args;
+
+        postln("noteOff: " + args);
+    });
+
+    ~ccMidiFunc = MIDIFunc.cc({
+        arg ...args;
+
+        postln("cc: " + args);
+    });
+
+    ~touchMidiFunc = MIDIFunc.touch({
+        arg ...args;
+
+        postln("touch: " + args);
+    });
+
+    ~bendOnMidiFunc = MIDIFunc.bend({
+        arg ...args;
+
+        postln("bend: " + args);
+    });
+)
+
+(
+    ~noteOnMidiFunc.free();
+    ~noteOffMidiFunc.free();
+    ~ccMidiFunc.free();
+    ~touchMidiFunc.free();
+    ~bendOnMidiFunc.free();
+)
+
 (
     SynthDef(\fx, { | in = 16, out = 0 |
         var signal = In.ar(in, 2);
