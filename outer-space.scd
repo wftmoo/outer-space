@@ -7,6 +7,14 @@ s.meter;
 f = FreqScope(server: s);
 
 ~scale = Scale.minor;
+~synths = Array.newClear(128);
+
+(
+    ~isInScale = { | note, scale |
+        ~scale.degrees.includesEqual(note % 12).postln;
+    };
+)
+
 
 MIDIClient.init();
 MIDIIn.connectAll();
@@ -15,16 +23,30 @@ MIDIFunc.trace(true);
 MIDIFunc.trace(false);
 
 (
-    ~noteOnMidiFunc = MIDIFunc.noteOn({
-        arg ...args;
+    ~noteOnMidiFunc.free();
+    ~noteOffMidiFunc.free();
+    ~ccMidiFunc.free();
+    ~touchMidiFunc.free();
+    ~bendOnMidiFunc.free();
 
-        postln("noteOn: " + args);
+    ~noteOnMidiFunc = MIDIFunc.noteOn({
+        arg velo, note;
+
+        if ( ~isInScale.value(note, ~scale),
+            {
+                ~synths[note] = Synth(\keys,
+                    [
+                        \out, 18,
+                        \freq, note.midicps,
+                    ]);
+            }
+        );
     });
 
     ~noteOffMidiFunc = MIDIFunc.noteOff({
-        arg ...args;
+        arg velo, note;
 
-        postln("noteOff: " + args);
+        ~synths[note].set(\gate, 0);
     });
 
     ~ccMidiFunc = MIDIFunc.cc({
@@ -65,8 +87,21 @@ MIDIFunc.trace(false);
 )
 
 (
+    SynthDef(\keys_fx, { | in = 18, out = 16 |
+        var signal = In.ar(in, 2);
+
+        signal = Limiter.ar(signal, dur: 0.3);
+
+        Out.ar(out, signal);
+    }).add;
+)
+
+(
     ~fx.free;
     ~fx = Synth(\fx);
+
+    ~keys_fx.free;
+    ~keys_fx = Synth(\keys_fx);
 )
 
 (
@@ -117,7 +152,7 @@ MIDIFunc.trace(false);
         Out.ar(out, Pan2.ar(signal));
     }).add;
 
-    SynthDef(\beep, { | out 0, freq = 1000, amp = 0.1 |
+    SynthDef(\beep, { | out = 0, freq = 1000, amp = 0.1 |
         var signal = Pulse.ar(freq, mul: amp);
         var env = Env([0, 1, 1, 0], [0.01, 0.1, 0.05]);
         var envGen = EnvGen.ar(env, doneAction: Done.freeSelf);
@@ -125,6 +160,18 @@ MIDIFunc.trace(false);
         signal = signal * envGen;
 
         Out.ar(out, Pan2.ar(signal, rrand(-1.0, 1.0)));
+    }).add;
+
+    SynthDef(\keys, { | out = 0, gate = 1, freq = 300 |
+        var signal = SinOsc.ar(freq) + LFTri.ar(freq);
+        var am = SinOsc.ar(rrand(1.0, 3.0)) + Pulse.ar(rrand(1.0, 3.0));
+        var env = Env([0, 1, 0], [0.3, 10], releaseNode: 1);
+        var envGen = EnvGen.ar(env, gate, doneAction: Done.freeSelf);
+
+        signal = signal * am;
+        signal = signal * envGen * 0.20;
+
+        Out.ar(out, Pan2.ar(signal, LFNoise0.ar(3)));
     }).add;
 )
 
