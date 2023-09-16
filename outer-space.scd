@@ -70,6 +70,16 @@ f = FreqScope(server: s);
 
         Out.ar(out, Pan2.ar(signal));
     }).add;
+
+    SynthDef(\beep, { | out 0, freq = 1000, amp = 0.1 |
+        var signal = Pulse.ar(freq, mul: amp);
+        var env = Env([0, 1, 1, 0], [0.01, 0.1, 0.05]);
+        var envGen = EnvGen.ar(env, doneAction: Done.freeSelf);
+
+        signal = signal * envGen;
+
+        Out.ar(out, Pan2.ar(signal, rrand(-1.0, 1.0)));
+    }).add;
 )
 
 (
@@ -150,6 +160,19 @@ f = FreqScope(server: s);
             rrand(3, 7).wait;
         }.loop;
     });
+
+    Tdef(\task_beep, {
+        {
+            var freq = [
+                ~scale.degreeToFreq(0, 60.midicps, 3),
+                ~scale.degreeToFreq(0, 60.midicps, 4),
+                ~scale.degreeToFreq(0, 60.midicps, 5)];
+
+            Synth(\beep, [\out, 16, \freq, freq, \amp, 0.3]);
+
+            rrand(5.0, 10.0).wait;
+        }.loop;
+    });
 )
 
 Tdef(\task_ambient_low).play;
@@ -163,6 +186,9 @@ Tdef(\task_phrase).stop;
 
 Tdef(\task_ascending_phrase).play;
 Tdef(\task_ascending_phrase).stop;
+
+Tdef(\task_beep).play;
+Tdef(\task_beep).stop;
 
 // Recording
 (
