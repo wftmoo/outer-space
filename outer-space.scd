@@ -187,7 +187,7 @@ MIDIFunc.trace(false);
 
         var signal = SinOsc.ar(freq) + LFTri.ar(freq);
         var am = SinOsc.ar(rrand(1.0, 5.0)) + Pulse.ar(amPulseFreq);
-        var env = Env([0, 1, 0], [0.3, 10], releaseNode: 1);
+        var env = Env([0, 1, 0], [0.3, 10], -5, 1);
         var envGen = EnvGen.ar(env, gate, doneAction: Done.freeSelf);
 
         signal = signal * am * envGen * amp;
