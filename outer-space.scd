@@ -34,11 +34,14 @@ MIDIFunc.trace(false);
 
         if ( ~isInScale.value(note, ~scale),
             {
-                ~synths[note] = Synth(\keys,
+                ~synths[note] = Synth(
+                    \keys,
                     [
                         \out, 18,
                         \freq, note.midicps,
-                    ]);
+                        \amPulseFreq, ~keysAmPulseFreq,
+                    ],
+                    ~keysGroup);
             }
         );
     });
@@ -50,9 +53,12 @@ MIDIFunc.trace(false);
     });
 
     ~ccMidiFunc = MIDIFunc.cc({
-        arg ...args;
+        arg val, num;
 
-        postln("cc: " + args);
+        switch (num,
+            70, {
+                ~keysAmPulseFreq = linlin(val, 0, 127, 1.0, 5.0);
+                ~keysGroup.set(\amPulseFreq, ~keysAmPulseFreq); });
     });
 
     ~touchMidiFunc = MIDIFunc.touch({
@@ -75,6 +81,10 @@ MIDIFunc.trace(false);
     ~touchMidiFunc.free();
     ~bendOnMidiFunc.free();
 )
+
+~keysGroup = Group.head(s);
+
+~keysAmPulseFreq = 1;
 
 (
     SynthDef(\fx, { | in = 16, out = 0 |
@@ -162,14 +172,20 @@ MIDIFunc.trace(false);
         Out.ar(out, Pan2.ar(signal, rrand(-1.0, 1.0)));
     }).add;
 
-    SynthDef(\keys, { | out = 0, gate = 1, freq = 300 |
+    SynthDef(\keys, {
+        arg
+            out = 0,
+            gate = 1,
+            freq = 300,
+            amp = 0.3,
+            amPulseFreq = ~keysAmPulseFreq;
+
         var signal = SinOsc.ar(freq) + LFTri.ar(freq);
-        var am = SinOsc.ar(rrand(1.0, 3.0)) + Pulse.ar(rrand(1.0, 3.0));
+        var am = SinOsc.ar(rrand(1.0, 5.0)) + Pulse.ar(amPulseFreq);
         var env = Env([0, 1, 0], [0.3, 10], releaseNode: 1);
         var envGen = EnvGen.ar(env, gate, doneAction: Done.freeSelf);
 
-        signal = signal * am;
-        signal = signal * envGen * 0.20;
+        signal = signal * am * envGen * amp;
 
         Out.ar(out, Pan2.ar(signal, LFNoise0.ar(3)));
     }).add;
@@ -294,4 +310,3 @@ Tdef(\task_beep).stop;
 
 ~recorder.record();
 ~recorder.stopRecording();
-
