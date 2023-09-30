@@ -15,9 +15,10 @@ f = FreqScope(server: s);
     };
 )
 
-
+(
 MIDIClient.init();
 MIDIIn.connectAll();
+)
 
 MIDIFunc.trace(true);
 MIDIFunc.trace(false);
@@ -82,7 +83,11 @@ MIDIFunc.trace(false);
     ~bendOnMidiFunc.free();
 )
 
-~keysGroup = Group.head(s);
+(
+    ~synthsGroup = Group.head(s);
+    ~keysGroup = Group(~synthsGroup);
+    ~fxGroup = Group.tail(s);
+)
 
 ~keysAmPulseFreq = 1;
 
@@ -108,10 +113,10 @@ MIDIFunc.trace(false);
 
 (
     ~fx.free;
-    ~fx = Synth(\fx);
+    ~fx = Synth(\fx, [], ~fxGroup);
 
     ~keys_fx.free;
-    ~keys_fx = Synth(\keys_fx);
+    ~keys_fx = Synth(\keys_fx, [], ~fx, \addBefore);
 )
 
 (
@@ -197,7 +202,7 @@ MIDIFunc.trace(false);
             var freq = ~scale.degreeToFreq(
                 rrand(0, 6), 60.midicps, rrand(-2, -1));
 
-            Synth(\ambient, [\out, 16, \freq, freq, \amp, 0.5, \env_attack, 3]);
+            Synth(\ambient, [\out, 16, \freq, freq, \amp, 0.5, \env_attack, 3], ~synthsGroup);
 
             rrand(1, 5).wait;
         }.loop;
@@ -208,7 +213,7 @@ MIDIFunc.trace(false);
             var freq = ~scale.degreeToFreq(
                 rrand(0, 6), 60.midicps, rrand(0, 1));
 
-            Synth(\ambient, [\out, 16, \freq, freq]);
+            Synth(\ambient, [\out, 16, \freq, freq], ~synthsGroup);
 
             rrand(0.01, 1).wait;
         }.loop;
@@ -225,7 +230,7 @@ MIDIFunc.trace(false);
 
                 var freq = ~scale.degreeToFreq(i, 60.midicps, octave);
 
-                Synth(\phrase, [\out, 16, \freq, freq, \amp, rrand(0.1, 0.5)]);
+                Synth(\phrase, [\out, 16, \freq, freq, \amp, rrand(0.1, 0.5)], ~synthsGroup);
 
                 rrand(1, 3).wait;
             });
@@ -261,7 +266,7 @@ MIDIFunc.trace(false);
 
                 var freq = ~scale.degreeToFreq(i, 60.midicps, octave);
 
-                Synth(\ascending_phrase, [\out, 16, \freq, freq, \amp, rrand(0.05, 0.3)]);
+                Synth(\ascending_phrase, [\out, 16, \freq, freq, \amp, rrand(0.05, 0.3)], ~synthsGroup);
 
                 rrand(0.1, 1.0).wait;
             });
@@ -277,7 +282,7 @@ MIDIFunc.trace(false);
                 ~scale.degreeToFreq(0, 60.midicps, 4),
                 ~scale.degreeToFreq(0, 60.midicps, 5)];
 
-            Synth(\beep, [\out, 16, \freq, freq, \amp, 0.3]);
+            Synth(\beep, [\out, 16, \freq, freq, \amp, 0.3], ~synthsGroup);
 
             rrand(5.0, 10.0).wait;
         }.loop;
