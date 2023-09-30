@@ -58,7 +58,7 @@ MIDIFunc.trace(false);
 
         switch (num,
             70, {
-                ~keysAmPulseFreq = linlin(val, 0, 127, 1.0, 5.0);
+                ~keysAmPulseFreq = linexp(val, 0, 127, 0.1, 10.0);
                 ~keysGroup.set(\amPulseFreq, ~keysAmPulseFreq); });
     });
 
