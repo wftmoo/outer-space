@@ -41,6 +41,7 @@ MIDIFunc.trace(false);
                         \out, 18,
                         \freq, note.midicps,
                         \amPulseFreq, ~keysAmPulseFreq,
+                        \bendFreq, ~keysBendFreq,
                     ],
                     ~keysGroup);
             }
@@ -69,9 +70,9 @@ MIDIFunc.trace(false);
     });
 
     ~bendOnMidiFunc = MIDIFunc.bend({
-        arg ...args;
-
-        postln("bend: " + args);
+        arg num;
+        ~keysBendFreq = linlin(num, 0, 16383, -50.0, 50.0);
+        ~keysGroup.set(\bendFreq, ~keysBendFreq);
     });
 )
 
@@ -90,6 +91,7 @@ MIDIFunc.trace(false);
 )
 
 ~keysAmPulseFreq = 1;
+~keysBendFreq = 0;
 
 (
     SynthDef(\fx, { | in = 16, out = 0 |
@@ -183,9 +185,10 @@ MIDIFunc.trace(false);
             gate = 1,
             freq = 300,
             amp = 0.3,
-            amPulseFreq = ~keysAmPulseFreq;
+            amPulseFreq = ~keysAmPulseFreq,
+            bendFreq = ~keysBendFreq;
 
-        var signal = SinOsc.ar(freq) + LFTri.ar(freq);
+        var signal = SinOsc.ar(freq + bendFreq) + LFTri.ar(freq + bendFreq);
         var am = SinOsc.ar(rrand(1.0, 5.0)) + Pulse.ar(amPulseFreq);
         var env = Env([0, 1, 0], [0.3, 10], -5, 1);
         var envGen = EnvGen.ar(env, gate, doneAction: Done.freeSelf);
