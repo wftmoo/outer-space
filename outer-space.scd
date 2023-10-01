@@ -40,6 +40,7 @@ MIDIFunc.trace(false);
                     [
                         \out, 18,
                         \freq, note.midicps,
+                        \amSinOscFreq, ~keysAmSinOscFreq,
                         \amPulseFreq, ~keysAmPulseFreq,
                         \bendFreq, ~keysBendFreq,
                     ],
@@ -59,6 +60,9 @@ MIDIFunc.trace(false);
 
         switch (num,
             70, {
+                ~keysAmSinOscFreq = linexp(val, 0, 127, 0.3, 9.0);
+                ~keysGroup.set(\amSinOscFreq, ~keysAmSinOscFreq); },
+            71, {
                 ~keysAmPulseFreq = linexp(val, 0, 127, 0.1, 10.0);
                 ~keysGroup.set(\amPulseFreq, ~keysAmPulseFreq); });
     });
@@ -90,6 +94,7 @@ MIDIFunc.trace(false);
     ~fxGroup = Group.tail(s);
 )
 
+~keysAmSinOscFreq = 1;
 ~keysAmPulseFreq = 1;
 ~keysBendFreq = 0;
 
@@ -185,11 +190,12 @@ MIDIFunc.trace(false);
             gate = 1,
             freq = 300,
             amp = 0.3,
+            amSinOscFreq = ~keysAmSinOscFreq,
             amPulseFreq = ~keysAmPulseFreq,
             bendFreq = ~keysBendFreq;
 
         var signal = SinOsc.ar(freq + bendFreq) + LFTri.ar(freq + bendFreq);
-        var am = SinOsc.ar(rrand(1.0, 5.0)) + Pulse.ar(amPulseFreq);
+        var am = SinOsc.ar(amSinOscFreq) + Pulse.ar(amPulseFreq);
         var env = Env([0, 1, 0], [0.3, 10], -5, 1);
         var envGen = EnvGen.ar(env, gate, doneAction: Done.freeSelf);
 
